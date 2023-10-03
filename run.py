@@ -2,7 +2,7 @@ import mysql.connector
 import datetime
 import socket
 
-HOST = "192.168.100.8"  # The server's hostname or IP address
+HOST = "192.168.20.254"  # The server's hostname or IP address
 PORT = 6001  # The port used by the server
 
 library_name = "Coba_Aja"
@@ -32,11 +32,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             if not data:
                 break
 
-            rest = bytes("", "utf-8")
+            resp = bytes("", "utf-8")
 
             # SC registration
             if string[0:2] == "99":
-                resp = bytes("98YYYNNN012010"+gettime()+"2.00|AO"+library_name+"|AM"+library_name, 'utf-8')
+                resp = bytes("98YYYNNN500   003"+gettime()+"2.00AO"+library_name+"|BXNYYNYNNYNNYNNNNN"+"\r", 'utf-8')
             
             # item information
             if string[0:2] == "17":
@@ -49,7 +49,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 myresult = mycursor.fetchall()
 
                 if len(myresult) == 0:
-                    resp = bytes("18000001"+gettime()+"AO"+library_name+"|AB"+item_id+"|AJ|AFBUKU TIDAK DITEMUKAN", 'utf-8')
+                    resp = bytes("18000001"+gettime()+"AO"+library_name+"|AB"+item_id+"|AJ|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
 
                 else :
 
@@ -77,10 +77,16 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         cs = "03"
 
                     # Form data
-                    resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AB"+item_id+"|AJ"+title, 'utf-8')
+                    resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AB"+item_id+"|AJ"+title+"\r", 'utf-8')
+
+            # patron end session
+            elif string[0:2] == "35":
+                # get user ID
+                user_id = string.split("AA")[1].split("|")[0]
+                resp = bytes("36Y"+gettime()+"|AO"+library_name+"|AA"+user_id+"\r", 'utf-8')
             
             # patron status
-            elif string[0:2] == "63":
+            elif string[0:2] == "23":
                 # get user ID
                 user_id = string.split("AA")[1].split("|")[0]
 
@@ -88,13 +94,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 mycursor = mydb.cursor()
                 mycursor.execute("SELECT * FROM member WHERE member_id='"+user_id+"'")
                 myresult = mycursor.fetchall()
+
                 if len(myresult) == 0:
-                    resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|BLN|AFANGGOTA TIDAK DITEMUKAN","utf-8")
+                    resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|BLN|AFANGGOTA TIDAK DITEMUKAN"+"\r", 'utf-8')
                 else :
                     name = myresult[0][1]
                     expdate = myresult[0][17]
                     if datetime.datetime.date(datetime.datetime.now()) > expdate:
-                        resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANGGOTATIDAKAKTIF","utf-8")
+                        resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANGGOTATIDAKAKTIF"+"\r", 'utf-8')
                     
                     mycursor = mydb.cursor()
                     mycursor.execute("SELECT * FROM fines WHERE member_id='"+user_id+"'")
@@ -106,9 +113,40 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         credit += x[4]
 
                     if debet - credit != 0:
-                        resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI","utf-8")
+                        resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')    
+                    resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY"+"\r", 'utf-8')
 
-                    resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY","utf-8")
+
+            # patron information
+            elif string[0:2] == "63":
+                # get user ID
+                user_id = string.split("AA")[1].split("|")[0]
+
+                # check user
+                mycursor = mydb.cursor()
+                mycursor.execute("SELECT * FROM member WHERE member_id='"+user_id+"'")
+                myresult = mycursor.fetchall()
+                if len(myresult) == 0:
+                    resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|BLN|AFANGGOTA TIDAK DITEMUKAN"+"\r","utf-8")
+                else :
+                    name = myresult[0][1]
+                    expdate = myresult[0][17]
+                    if datetime.datetime.date(datetime.datetime.now()) > expdate:
+                        resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANGGOTATIDAKAKTIF"+"\r","utf-8")
+                    
+                    mycursor = mydb.cursor()
+                    mycursor.execute("SELECT * FROM fines WHERE member_id='"+user_id+"'")
+                    myresult = mycursor.fetchall()
+                    debet = 0
+                    credit = 0
+                    for x in myresult:
+                        debet += x[3]
+                        credit += x[4]
+
+                    if debet - credit != 0:
+                        resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r","utf-8")
+
+                    resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY"+"\r","utf-8")
 
             # check out
             elif string[0:2] == "11":
@@ -126,7 +164,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     credit += x[4]
 
                 if debet - credit != 0:
-                    resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI", 'utf-8')
+                    resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')
                     
                 else :
                     # get member type
@@ -155,7 +193,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     
                     print(loan)
                     if loan == loan_limit:
-                        resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFSUDAH MENCAPAI LIMIT PEMINJAMAN", 'utf-8')
+                        resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFSUDAH MENCAPAI LIMIT PEMINJAMAN"+"\r", 'utf-8')
                     
                     else:
                         # check book
@@ -163,7 +201,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
                         myresult = mycursor.fetchall()
                         if len(myresult) == 0 :
-                            resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFBUKU TIDAK DITEMUKAN", 'utf-8')
+                            resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
                         else :
                             biblio_id = myresult[0][1]
                             mycursor = mydb.cursor()
@@ -179,9 +217,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                                     last = x
                                 
                             if last[8] == 1 and last[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
-                                resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ"+title+"|AFBUKU SUDAH DIPINJAM", 'utf-8')
+                                resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ"+title+"|AFBUKU SUDAH DIPINJAM"+"\r", 'utf-8')
                             else :
-                                resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM", 'utf-8')
+                                resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
                                 
                                 # insert to loan
                                 sql = "INSERT INTO loan (item_code, member_id, loan_date, due_date, is_lent, input_date, last_update) VALUES (%s, %s, %s, %s, %s, %s, %s)"
@@ -218,7 +256,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
                 myresult = mycursor.fetchall()
                 if len(myresult) == 0 :
-                    resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU TIDAK DITEMUKAN", 'utf-8')
+                    resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
 
                 else :
                     biblio_id = myresult[0][1]
@@ -235,10 +273,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                             last = x
 
                         if last[8] == 1 and last[9] == 1: # if is_lent 1 and is_return 0 then book in lent and not available    
-                            resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM", 'utf-8')
+                            resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
                         
                         else:
-                            resp = bytes("100YNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BERHASIL DIKEMBALIKAN", 'utf-8')
+                            resp = bytes("101YNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BERHASIL DIKEMBALIKAN"+"\r", 'utf-8')
 
                             # update to loan
                             sql = "UPDATE loan SET is_return=%s, return_date=%s, last_update=%s WHERE loan_id=%s"
@@ -252,7 +290,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                             print(mycursor._warnings)
                     
                     else:
-                        resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM", 'utf-8')
+                        resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
 
 
             print(resp)
