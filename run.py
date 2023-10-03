@@ -33,6 +33,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 break
 
             rest = bytes("", "utf-8")
+
+            # SC registration
+            if string[0:2] == "99":
+                resp = bytes("98YYYNNN012010"+gettime()+"2.00|AO"+library_name+"|AM"+library_name, 'utf-8')
             
             # item information
             if string[0:2] == "17":
