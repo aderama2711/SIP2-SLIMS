@@ -33,6 +33,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 break
 
             resp = bytes("", "utf-8")
+            title = ""
+            item_id = ""
+            user_id = ""
 
             # SC registration
             if string[0:2] == "99":
@@ -68,16 +71,19 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         for x in myresult:
                             last = x
                             print(last)
+
+                    due_date = ""
                         
                     if last[8] == 1 and last[9] == 1: # if is_lent 1 and is_return 1 then book returned and available
                         cs = "03"
                     elif last[8] == 1 and last[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
                         cs = "02"
+                        due_date = last[4]
                     else :
                         cs = "03"
 
                     # Form data
-                    resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AB"+item_id+"|AJ"+title+"\r", 'utf-8')
+                    resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AH"+due_date.strftime('%Y-%m-%d')+"|AB"+item_id+"|AJ"+title+"\r", 'utf-8')
 
             # patron end session
             elif string[0:2] == "35":
@@ -96,7 +102,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 myresult = mycursor.fetchall()
 
                 if len(myresult) == 0:
-                    resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|BLN|AFANGGOTA TIDAK DITEMUKAN"+"\r", 'utf-8')
+                    resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|BLN|AF ATD"+"\r", 'utf-8')
                 else :
                     name = myresult[0][1]
                     expdate = myresult[0][17]
@@ -127,7 +133,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 mycursor.execute("SELECT * FROM member WHERE member_id='"+user_id+"'")
                 myresult = mycursor.fetchall()
                 if len(myresult) == 0:
-                    resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|BLN|AFANGGOTA TIDAK DITEMUKAN"+"\r","utf-8")
+                    resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|BLN|AF ATD"+"\r","utf-8")
                 else :
                     name = myresult[0][1]
                     expdate = myresult[0][17]
@@ -146,7 +152,26 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     if debet - credit != 0:
                         resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r","utf-8")
 
-                    resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY"+"\r","utf-8")
+                    loan_count = 0
+                    summary = " "
+                    id_list_loan = []
+
+                    mycursor = mydb.cursor()
+                    mycursor.execute("SELECT * FROM loan WHERE member_id='"+user_id+"' ORDER BY `loan_id`")
+                    myresult = mycursor.fetchall()
+                    if len(myresult) != 0:
+                        for x in myresult:
+                            if x[8] == 1 and x[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
+                                loan_count += 1
+                                id_list_loan.append(x[1])
+                                summary = "Y"
+                    
+                    charged_item = ""
+                    for id in id_list_loan:
+                        charged_item += "|AU"+id
+
+
+                    resp = bytes("64  "+summary+"           001"+gettime()+(" "*8)+"   "+str(loan_count)+(" "*12)+"AO"+library_name+"|AA"+user_id+"|AE"+name+charged_item+"|BLY"+"\r","utf-8")
 
             # check out
             elif string[0:2] == "11":
@@ -193,7 +218,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     
                     print(loan)
                     if loan == loan_limit:
-                        resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFSUDAH MENCAPAI LIMIT PEMINJAMAN"+"\r", 'utf-8')
+                        resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"|AH|AB"+item_id+"|AJ|AFSUDAH MENCAPAI LIMIT PEMINJAMAN"+"\r", 'utf-8')
                     
                     else:
                         # check book
@@ -201,7 +226,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
                         myresult = mycursor.fetchall()
                         if len(myresult) == 0 :
-                            resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
+                            resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"|AH|AB"+item_id+"|AJ|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
                         else :
                             biblio_id = myresult[0][1]
                             mycursor = mydb.cursor()
@@ -217,9 +242,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                                     last = x
                                 
                             if last[8] == 1 and last[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
-                                resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ"+title+"|AFBUKU SUDAH DIPINJAM"+"\r", 'utf-8')
+                                resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"|AH|AB"+item_id+"|AJ"+title+"|AFBUKU SUDAH DIPINJAM"+"\r", 'utf-8')
                             else :
-                                resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
+                                resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+user_id+"|AH"+str((datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'))+"|AB"+item_id+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
                                 
                                 # insert to loan
                                 sql = "INSERT INTO loan (item_code, member_id, loan_date, due_date, is_lent, input_date, last_update) VALUES (%s, %s, %s, %s, %s, %s, %s)"
