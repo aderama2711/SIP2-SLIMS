@@ -2,18 +2,18 @@ import mysql.connector
 import datetime
 import socket
 
-HOST = "192.168.20.254"  # The server's hostname or IP address
-PORT = 6001  # The port used by the server
+HOST = "192.168.20.254"  # The IP Address of Translator SIP 
+PORT = 6001  # The port used by Translator SIP
 
-library_name = "Coba_Aja"
+library_name = "Perpustakaan"
 language = "001"
 
 mydb = mysql.connector.connect(
-  host="localhost",
-  user="root",
-  password="root",
-  port="3404",
-  database="bulian"
+  host="localhost", #IP Address of the database
+  user="root", #db username (read/write) access
+  password="root", #db password
+  port="3404", # port used by the db
+  database="bulian" # name of the db
 )
 
 def gettime():
