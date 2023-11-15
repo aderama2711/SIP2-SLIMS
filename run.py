@@ -234,19 +234,47 @@ while True:
                                 mycursor.execute("SELECT * FROM search_biblio WHERE biblio_id="+str(biblio_id))
                                 myresult = mycursor.fetchall()
                                 title = myresult[0][1]
+                                
+                                loaned = 0
 
                                 mycursor = mydb.cursor()
                                 mycursor.execute("SELECT * FROM loan WHERE item_code='"+item_id+"' ORDER BY `loan_id`")
                                 myresult = mycursor.fetchall()
                                 if len(myresult) != 0:
+                                    loaned = 1
                                     for x in myresult:
                                         last = x
-                                    
-                                if last[8] == 1 and last[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
-                                    resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"|AH|AB"+item_id+"|AJ"+title+"|AFBUKU SUDAH DIPINJAM"+"\r", 'utf-8')
-                                else :
+
+                                if loaned == 1:
+                                    if last[8] == 1 and last[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
+                                        resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"|AH|AB"+item_id+"|AJ"+title+"|AFBUKU SUDAH DIPINJAM"+"\r", 'utf-8')
+                                    else :
+                                        resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+user_id+"|AH"+str((datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'))+"|AB"+item_id+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
+                                        
+                                        # insert to loan
+                                        sql = "INSERT INTO loan (item_code, member_id, loan_date, due_date, is_lent, input_date, last_update) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                                        val = (item_id, user_id, datetime.datetime.now().strftime('%Y-%m-%d'), (datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'), 1, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+                                        mycursor.execute(sql, val)
+
+                                        mydb.commit()
+
+                                        print(mycursor.rowcount, "record inserted.")
+                                        print(mycursor._warnings)
+
+                                        # insert to log
+                                        sql = "INSERT INTO system_log (log_type, id, log_location, sub_module, action, log_msg, log_date) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                                        val = ("system", user_id, "circulation", "Loan", "Add", "Gateway: Loan", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+                                        mycursor.execute(sql, val)
+
+                                        mydb.commit()
+
+                                        print(mycursor.rowcount, "record inserted.")
+                                        print(mycursor._warnings)
+                                else:
                                     resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+user_id+"|AH"+str((datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'))+"|AB"+item_id+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
-                                    
+                                        
                                     # insert to loan
                                     sql = "INSERT INTO loan (item_code, member_id, loan_date, due_date, is_lent, input_date, last_update) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                                     val = (item_id, user_id, datetime.datetime.now().strftime('%Y-%m-%d'), (datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'), 1, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
