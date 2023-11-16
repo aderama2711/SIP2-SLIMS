@@ -27,7 +27,7 @@ def gettime():
 
 while True:
     try:
-        serverSocket.listen(1)
+        serverSocket.listen()
         conn, addr = serverSocket.accept()
         with conn:
             print(f"Connected by {addr}")
