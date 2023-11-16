@@ -7,6 +7,7 @@ PORT = 6001  # The port used by Translator SIP
 
 library_name = "Perpustakaan"
 language = "001"
+slims_version = "9" # Please select the version
 
 mydb = mysql.connector.connect(
   host="localhost", #IP Address of the database
@@ -262,16 +263,18 @@ while True:
                                         print(mycursor.rowcount, "record inserted.")
                                         print(mycursor._warnings)
 
-                                        # insert to log
-                                        sql = "INSERT INTO system_log (log_type, id, log_location, sub_module, action, log_msg, log_date) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-                                        val = ("system", user_id, "circulation", "Loan", "Add", "Gateway: Loan", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-                                        mycursor.execute(sql, val)
+                                        if slims_version == 9:
+                                            # insert to log
+                                            sql = "INSERT INTO system_log (log_type, id, log_location, sub_module, action, log_msg, log_date) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                                            val = ("system", user_id, "circulation", "Loan", "Add", "Gateway: Loan", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-                                        mydb.commit()
+                                            mycursor.execute(sql, val)
 
-                                        print(mycursor.rowcount, "record inserted.")
-                                        print(mycursor._warnings)
+                                            mydb.commit()
+
+                                            print(mycursor.rowcount, "record inserted.")
+                                            print(mycursor._warnings)
                                 else:
                                     resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+user_id+"|AH"+str((datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'))+"|AB"+item_id+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
                                         
@@ -286,16 +289,17 @@ while True:
                                     print(mycursor.rowcount, "record inserted.")
                                     print(mycursor._warnings)
 
-                                    # insert to log
-                                    sql = "INSERT INTO system_log (log_type, id, log_location, sub_module, action, log_msg, log_date) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-                                    val = ("system", user_id, "circulation", "Loan", "Add", "Gateway: Loan", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                                    if slims_version == 9:
+                                        # insert to log
+                                        sql = "INSERT INTO system_log (log_type, id, log_location, sub_module, action, log_msg, log_date) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+                                        val = ("system", user_id, "circulation", "Loan", "Add", "Gateway: Loan", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-                                    mycursor.execute(sql, val)
+                                        mycursor.execute(sql, val)
 
-                                    mydb.commit()
+                                        mydb.commit()
 
-                                    print(mycursor.rowcount, "record inserted.")
-                                    print(mycursor._warnings)
+                                        print(mycursor.rowcount, "record inserted.")
+                                        print(mycursor._warnings)
                         
                 # check in
                 elif string[0:2] == "09":
