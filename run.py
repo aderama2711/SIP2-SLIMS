@@ -105,12 +105,12 @@ while True:
                         myresult = mycursor.fetchall()
 
                         if len(myresult) == 0:
-                            resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|BLN|AF ATD"+"\r", 'utf-8')
+                            resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|BLN|AFANGGOTA TIDAK DITEMUKAN"+"\r", 'utf-8')
                         else :
                             name = myresult[0][1]
                             expdate = myresult[0][17]
                             if datetime.datetime.date(datetime.datetime.now()) > expdate:
-                                resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANGGOTATIDAKAKTIF"+"\r", 'utf-8')
+                                resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r", 'utf-8')
                             
                             mycursor = mydb.cursor()
                             mycursor.execute("SELECT * FROM fines WHERE member_id='"+user_id+"'")
