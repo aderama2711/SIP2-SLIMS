@@ -22,6 +22,7 @@ def gettime():
 
 while True:
     try:
+        
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((HOST, PORT))
             s.listen()
@@ -354,8 +355,8 @@ while True:
 
                     print(resp)
                     conn.sendall(resp)
-    except:
-        continue
+    except Exception as error:
+        print("An exception occurred:", type(error).__name__, "–", error)
 
 # id = "B00001"
 
