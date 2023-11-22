@@ -43,10 +43,12 @@ while True:
 
                     # SC registration
                     if string[0:2] == "99":
+                        print("SC registration")
                         resp = bytes("98YYYNNN500   003"+gettime()+"2.00AO"+library_name+"|BXNYYNYNNYNNYNNNNN"+"\r", 'utf-8')
                     
                     # item information
                     if string[0:2] == "17":
+                        print("Item Information")
                         # get book ID
                         item_id = string.split("AB")[1].split("|")[0]
 
@@ -100,12 +102,14 @@ while True:
 
                     # patron end session
                     elif string[0:2] == "35":
+                        print("Patron End Session")
                         # get user ID
                         user_id = string.split("AA")[1].split("|")[0]
                         resp = bytes("36Y"+gettime()+"|AO"+library_name+"|AA"+user_id+"\r", 'utf-8')
                     
                     # patron status
                     elif string[0:2] == "23":
+                        print("Patron Status")
                         # get user ID
                         user_id = string.split("AA")[1].split("|")[0]
 
@@ -138,6 +142,7 @@ while True:
 
                     # patron information
                     elif string[0:2] == "63":
+                        print("Patron Information")
                         # get user ID
                         user_id = string.split("AA")[1].split("|")[0]
 
@@ -188,6 +193,7 @@ while True:
 
                     # check out
                     elif string[0:2] == "11":
+                        print("Checkout")
                         # get user id and item id
                         user_id = string.split("AA")[1].split("|")[0]
                         item_id = string.split("AB")[1].split("|")[0]
@@ -314,6 +320,7 @@ while True:
                             
                     # check in
                     elif string[0:2] == "09":
+                        print("Checkin")
                         returnY = string[3:7]
                         returnM = string[7:9]
                         returnD = string[9:11]
