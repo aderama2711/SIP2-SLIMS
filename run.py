@@ -2,14 +2,6 @@ import mysql.connector
 import datetime
 import socket
 import traceback
-import logging
-
-logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
-
-logger = logging.getLogger("nameOfTheLogger")
-ConsoleOutputHandler = logging.StreamHandler()
-
-
 
 HOST = "127.0.0.1"  # The IP Address of Translator SIP 
 PORT = 6001  # The port used by Translator SIP
@@ -29,6 +21,9 @@ mydb = mysql.connector.connect(
 def gettime():
     return datetime.datetime.now().strftime("%Y%m%d    %H%M%S")
 
+def logtime():
+    return datetime.datetime.now().strftime("%d/%m/%Y %H/%M/%S")
+
 while True:
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -36,11 +31,11 @@ while True:
             s.listen()
             conn, addr = s.accept()
             with conn:
-                logger.info(f"Connected by {addr}")
+                print(logtime(),f"Connected by {addr}")
                 while True:
                     data = conn.recv(1024)
                     string = data.decode('utf-8')
-                    logger.info(string)
+                    print(logtime(),string)
                     if not data:
                         break
 
@@ -51,12 +46,12 @@ while True:
 
                     # SC registration
                     if string[0:2] == "99":
-                        logger.info("SC registration")
+                        print(logtime(),"SC registration")
                         resp = bytes("98YYYNNN500   003"+gettime()+"2.00AO"+library_name+"|BXNYYNYNNYNNYNNNNN"+"\r", 'utf-8')
                     
                     # item information
                     if string[0:2] == "17":
-                        logger.info("Item Information")
+                        print(logtime(),"Item Information")
                         # get book ID
                         item_id = string.split("AB")[1].split("|")[0]
 
@@ -108,14 +103,14 @@ while True:
 
                     # patron end session
                     elif string[0:2] == "35":
-                        logger.info("Patron End Session")
+                        print(logtime(),"Patron End Session")
                         # get user ID
                         user_id = string.split("AA")[1].split("|")[0]
                         resp = bytes("36Y"+gettime()+"|AO"+library_name+"|AA"+user_id+"\r", 'utf-8')
                     
                     # patron status
                     elif string[0:2] == "23":
-                        logger.info("Patron Status")
+                        print(logtime(),"Patron Status")
                         # get user ID
                         user_id = string.split("AA")[1].split("|")[0]
 
@@ -133,17 +128,22 @@ while True:
                                 resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r", 'utf-8')
                             
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
+                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND member_id='"+user_id+"'")
                             myresult = mycursor.fetchall()
 
                             if len(myresult) != 0:
-                                resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')    
+                                clear = True
+                                for x in myresult:
+                                    if x[4] < datetime.datetime.now():
+                                        clear = False
+                                if not clear:
+                                    resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')    
                             resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY"+"\r", 'utf-8')
 
 
                     # patron information
                     elif string[0:2] == "63":
-                        logger.info("Patron Information")
+                        print(logtime(),"Patron Information")
                         # get user ID
                         user_id = string.split("AA")[1].split("|")[0]
 
@@ -160,11 +160,16 @@ while True:
                                 resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r","utf-8")
                             
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
+                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND member_id='"+user_id+"'")
                             myresult = mycursor.fetchall()
 
                             if len(myresult) != 0:
-                                resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r","utf-8")
+                                clear = True
+                                for x in myresult:
+                                    if x[4] < datetime.datetime.now():
+                                        clear = False
+                                if not clear:
+                                    resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r","utf-8")
 
                             loan_count = 0
                             summary = " "
@@ -189,17 +194,22 @@ while True:
 
                     # check out
                     elif string[0:2] == "11":
-                        logger.info("Checkout")
+                        print(logtime(),"Checkout")
                         # get user id and item id
                         user_id = string.split("AA")[1].split("|")[0]
                         item_id = string.split("AB")[1].split("|")[0]
 
                         mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
+                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND member_id='"+user_id+"'")
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
-                            resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')
+                            clear = True
+                            for x in myresult:
+                                if x[4] < datetime.datetime.now():
+                                    clear = False
+                            if not clear:
+                                resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')
                             
                         else :
                             # get member type
@@ -267,8 +277,8 @@ while True:
 
                                             mydb.commit()
 
-                                            logger.info(mycursor.rowcount, "record inserted.")
-                                            logger.info(mycursor._warnings)
+                                            print(logtime(),mycursor.rowcount, "record inserted.")
+                                            print(logtime(),mycursor._warnings)
 
 
                                             if slims_version == 9:
@@ -280,8 +290,8 @@ while True:
 
                                                 mydb.commit()
 
-                                                logger.info(mycursor.rowcount, "record inserted.")
-                                                logger.info(mycursor._warnings)
+                                                print(logtime(),mycursor.rowcount, "record inserted.")
+                                                print(logtime(),mycursor._warnings)
                                     else:
                                         resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+user_id+"|AH"+str((datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'))+"|AB"+item_id+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
                                             
@@ -293,8 +303,8 @@ while True:
 
                                         mydb.commit()
 
-                                        logger.info(mycursor.rowcount, "record inserted.")
-                                        logger.info(mycursor._warnings)
+                                        print(logtime(),mycursor.rowcount, "record inserted.")
+                                        print(logtime(),mycursor._warnings)
 
                                         if slims_version == 9:
                                             # insert to log
@@ -305,24 +315,29 @@ while True:
 
                                             mydb.commit()
 
-                                            logger.info(mycursor.rowcount, "record inserted.")
-                                            logger.info(mycursor._warnings)
+                                            print(logtime(),mycursor.rowcount, "record inserted.")
+                                            print(logtime(),mycursor._warnings)
                             
                     # check in
                     elif string[0:2] == "09":
-                        logger.info("Checkin")
+                        print(logtime(),"Checkin")
                         returnY = string[3:7]
                         returnM = string[7:9]
                         returnD = string[9:11]
-                        logger.info(returnY, returnM, returnD)
+                        print(logtime(),returnY, returnM, returnD)
                         item_id = string.split("AB")[1].split("|")[0]
 
                         mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND item_code='"+item_id+"'")
+                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 and item_code='"+item_id+"'")
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
-                            resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFANDA MENDAPAT DENDA, SILAHKAN KE SIRKULASI"+"\r", 'utf-8')
+                            clear = True
+                            for x in myresult:
+                                if x[4] < datetime.datetime.now():
+                                    clear = False
+                            if not clear:
+                                resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFANDA MENDAPAT DENDA, SILAHKAN KE SIRKULASI"+"\r", 'utf-8')
 
                         # check book
                         mycursor = mydb.cursor()
@@ -359,24 +374,24 @@ while True:
 
                                     mydb.commit()
 
-                                    logger.info(mycursor.rowcount, "record inserted.")
-                                    logger.info(mycursor._warnings)
+                                    print(logtime(),mycursor.rowcount, "record inserted.")
+                                    print(logtime(),mycursor._warnings)
                             
                             else:
                                 resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
 
 
-                    logger.info(resp)
+                    print(logtime(),resp)
                     conn.sendall(resp)
     except Exception as error:
-        logger.warning(traceback.format_exc())
+        print(logtime(),traceback.format_exc())
 
 # id = "B00001"
 
 # mycursor = mydb.cursor()
 # mycursor.execute("SELECT * FROM item WHERE item_code='"+id+"'")
 # myresult = mycursor.fetchall()
-# print(myresult[0])
+# print(logtime(),myresult[0])
 
 
 # mycursor = mydb.cursor()
@@ -387,7 +402,7 @@ while True:
 # # myresult = mycursor.fetchall()
 
 # # for x in myresult:
-# #   print(x[1])
+# #   print(logtime(),x[1])
 
 
 # # add loan
@@ -400,5 +415,5 @@ while True:
 
 # mydb.commit()
 
-# print(mycursor.rowcount, "record inserted.")
-# print(mycursor._warnings)
+# print(logtime(),mycursor.rowcount, "record inserted.")
+# print(logtime(),mycursor._warnings)
