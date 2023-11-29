@@ -128,7 +128,7 @@ while True:
                                 resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r", 'utf-8')
                             
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND due_date < '"+gettime()+"' AND member_id='"+user_id+"'")
+                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
                             myresult = mycursor.fetchall()
 
                             if len(myresult) != 0:
@@ -155,7 +155,7 @@ while True:
                                 resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r","utf-8")
                             
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND due_date < '"+gettime()+"' AND member_id='"+user_id+"'")
+                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
                             myresult = mycursor.fetchall()
 
                             if len(myresult) != 0:
@@ -190,7 +190,7 @@ while True:
                         item_id = string.split("AB")[1].split("|")[0]
 
                         mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND due_date < '"+gettime()+"' AND member_id='"+user_id+"'")
+                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
@@ -313,7 +313,7 @@ while True:
                         item_id = string.split("AB")[1].split("|")[0]
 
                         mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND due_date < '"+gettime()+"' AND item_code='"+item_id+"'")
+                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND item_code='"+item_id+"'")
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
