@@ -128,16 +128,11 @@ while True:
                                 resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r", 'utf-8')
                             
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND member_id='"+user_id+"'")
+                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
                             myresult = mycursor.fetchall()
 
                             if len(myresult) != 0:
-                                clear = True
-                                for x in myresult:
-                                    if x[4] < datetime.datetime.now():
-                                        clear = False
-                                if not clear:
-                                    resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')    
+                                resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')    
                             resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY"+"\r", 'utf-8')
 
 
@@ -160,16 +155,11 @@ while True:
                                 resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r","utf-8")
                             
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND member_id='"+user_id+"'")
+                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
                             myresult = mycursor.fetchall()
 
                             if len(myresult) != 0:
-                                clear = True
-                                for x in myresult:
-                                    if x[4] < datetime.datetime.now():
-                                        clear = False
-                                if not clear:
-                                    resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r","utf-8")
+                                resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r","utf-8")
 
                             loan_count = 0
                             summary = " "
@@ -200,16 +190,11 @@ while True:
                         item_id = string.split("AB")[1].split("|")[0]
 
                         mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND member_id='"+user_id+"'")
+                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
-                            clear = True
-                            for x in myresult:
-                                if x[4] < datetime.datetime.now():
-                                    clear = False
-                            if not clear:
-                                resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')
+                            resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+user_id+"AH|AB"+item_id+"|AJ|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')
                             
                         else :
                             # get member type
@@ -328,16 +313,11 @@ while True:
                         item_id = string.split("AB")[1].split("|")[0]
 
                         mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 and item_code='"+item_id+"'")
+                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) and item_code='"+item_id+"'")
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
-                            clear = True
-                            for x in myresult:
-                                if x[4] < datetime.datetime.now():
-                                    clear = False
-                            if not clear:
-                                resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFANDA MENDAPAT DENDA, SILAHKAN KE SIRKULASI"+"\r", 'utf-8')
+                            resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFANDA MENDAPAT DENDA, SILAHKAN KE SIRKULASI"+"\r", 'utf-8')
 
                         # check book
                         mycursor = mydb.cursor()
