@@ -159,7 +159,7 @@ while True:
                             myresult = mycursor.fetchall()
 
                             if len(myresult) != 0:
-                                resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r","utf-8")
+                                resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r","utf-8")
 
                             loan_count = 0
                             summary = " "
@@ -317,7 +317,7 @@ while True:
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
-                            resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFANDA MENDAPAT DENDA, SILAHKAN KE SIRKULASI"+"\r", 'utf-8')
+                            resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFANDA MENDAPAT DENDA, SILAHKAN KE SIRKULASI"+"\r", 'utf-8')
 
                         # check book
                         mycursor = mydb.cursor()
