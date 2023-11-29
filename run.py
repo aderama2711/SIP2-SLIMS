@@ -133,7 +133,8 @@ while True:
 
                             if len(myresult) != 0:
                                 resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')    
-                            resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY"+"\r", 'utf-8')
+                            else:
+                                resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY"+"\r", 'utf-8')
 
 
                     # patron information
@@ -160,27 +161,27 @@ while True:
 
                             if len(myresult) != 0:
                                 resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r","utf-8")
+                            else:
+                                loan_count = 0
+                                summary = " "
+                                id_list_loan = []
 
-                            loan_count = 0
-                            summary = " "
-                            id_list_loan = []
-
-                            mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * FROM loan WHERE member_id='"+user_id+"' ORDER BY `loan_id`")
-                            myresult = mycursor.fetchall()
-                            if len(myresult) != 0:
-                                for x in myresult:
-                                    if x[8] == 1 and x[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
-                                        loan_count += 1
-                                        id_list_loan.append(x[1])
-                                        summary = "Y"
-                            
-                            charged_item = ""
-                            for id in id_list_loan:
-                                charged_item += "|AU"+id
+                                mycursor = mydb.cursor()
+                                mycursor.execute("SELECT * FROM loan WHERE member_id='"+user_id+"' ORDER BY `loan_id`")
+                                myresult = mycursor.fetchall()
+                                if len(myresult) != 0:
+                                    for x in myresult:
+                                        if x[8] == 1 and x[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
+                                            loan_count += 1
+                                            id_list_loan.append(x[1])
+                                            summary = "Y"
+                                
+                                charged_item = ""
+                                for id in id_list_loan:
+                                    charged_item += "|AU"+id
 
 
-                            resp = bytes("64  "+summary+"           001"+gettime()+(" "*8)+"   "+str(loan_count)+(" "*12)+"AO"+library_name+"|AA"+user_id+"|AE"+name+charged_item+"|BLY"+"\r","utf-8")
+                                resp = bytes("64  "+summary+"           001"+gettime()+(" "*8)+"   "+str(loan_count)+(" "*12)+"AO"+library_name+"|AA"+user_id+"|AE"+name+charged_item+"|BLY"+"\r","utf-8")
 
                     # check out
                     elif string[0:2] == "11":
@@ -319,46 +320,47 @@ while True:
                         if len(myresult) != 0:
                             resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFANDA MENDAPAT DENDA, SILAHKAN KE SIRKULASI"+"\r", 'utf-8')
 
-                        # check book
-                        mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
-                        myresult = mycursor.fetchall()
-                        if len(myresult) == 0 :
-                            resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
-
-                        else :
-                            biblio_id = myresult[0][1]
+                        else:
+                            # check book
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * FROM biblio WHERE biblio_id="+str(biblio_id))
+                            mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
                             myresult = mycursor.fetchall()
-                            title = myresult[0][2]
+                            if len(myresult) == 0 :
+                                resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
 
-                            mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * FROM loan WHERE item_code='"+item_id+"' ORDER BY `loan_id`")
-                            myresult = mycursor.fetchall()
-                            if len(myresult) != 0:
-                                for x in myresult:
-                                    last = x
+                            else :
+                                biblio_id = myresult[0][1]
+                                mycursor = mydb.cursor()
+                                mycursor.execute("SELECT * FROM biblio WHERE biblio_id="+str(biblio_id))
+                                myresult = mycursor.fetchall()
+                                title = myresult[0][2]
 
-                                if last[8] == 1 and last[9] == 1: # if is_lent 1 and is_return 0 then book in lent and not available    
-                                    resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
+                                mycursor = mydb.cursor()
+                                mycursor.execute("SELECT * FROM loan WHERE item_code='"+item_id+"' ORDER BY `loan_id`")
+                                myresult = mycursor.fetchall()
+                                if len(myresult) != 0:
+                                    for x in myresult:
+                                        last = x
+
+                                    if last[8] == 1 and last[9] == 1: # if is_lent 1 and is_return 0 then book in lent and not available    
+                                        resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
+                                    
+                                    else:
+                                        resp = bytes("101YNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BERHASIL DIKEMBALIKAN"+"\r", 'utf-8')
+
+                                        # update to loan
+                                        sql = "UPDATE loan SET is_return=%s, return_date=%s WHERE loan_id=%s"
+                                        val = ("1", returnY + "-" + returnM + "-" + returnD, last[0])
+
+                                        mycursor.execute(sql, val)
+
+                                        mydb.commit()
+
+                                        print(logtime(),mycursor.rowcount, "record inserted.")
+                                        print(logtime(),mycursor._warnings)
                                 
                                 else:
-                                    resp = bytes("101YNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BERHASIL DIKEMBALIKAN"+"\r", 'utf-8')
-
-                                    # update to loan
-                                    sql = "UPDATE loan SET is_return=%s, return_date=%s WHERE loan_id=%s"
-                                    val = ("1", returnY + "-" + returnM + "-" + returnD, last[0])
-
-                                    mycursor.execute(sql, val)
-
-                                    mydb.commit()
-
-                                    print(logtime(),mycursor.rowcount, "record inserted.")
-                                    print(logtime(),mycursor._warnings)
-                            
-                            else:
-                                resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
+                                    resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
 
 
                     print(logtime(),resp)
