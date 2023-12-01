@@ -10,6 +10,12 @@ library_name = "Perpustakaan"
 language = "001"
 slims_version = "8" # Please select the version
 
+db_host="localhost", #IP Address of the database
+db_user="userslims", #db username (read/write) access
+db_password="slims", #db password
+db_port="3306", # port used by the db
+db_name="slims8" # name of the db
+
 def gettime():
     return datetime.datetime.now().strftime("%Y%m%d    %H%M%S")
 
@@ -51,11 +57,11 @@ while True:
                         # DB Connect
                         try:
                             mydb = mysql.connector.connect(
-                            host="localhost", #IP Address of the database
-                            user="userslims", #db username (read/write) access
-                            password="slims", #db password
-                            port="3306", # port used by the db
-                            database="slims8" # name of the db
+                            host=db_host, #IP Address of the database
+                            user=db_user, #db username (read/write) access
+                            password=db_password, #db password
+                            port=db_port, # port used by the db
+                            database=db_name # name of the db
                             )
                             print(logtime(), "DB Connected")
                         except Exception as error:
@@ -126,11 +132,11 @@ while True:
                         # DB Connect
                         try:
                             mydb = mysql.connector.connect(
-                            host="localhost", #IP Address of the database
-                            user="userslims", #db username (read/write) access
-                            password="slims", #db password
-                            port="3306", # port used by the db
-                            database="slims8" # name of the db
+                            host=db_host, #IP Address of the database
+                            user=db_user, #db username (read/write) access
+                            password=db_password, #db password
+                            port=db_port, # port used by the db
+                            database=db_name # name of the db
                             )
                             print(logtime(), "DB Connected")
                         except Exception as error:
@@ -170,11 +176,11 @@ while True:
                         # DB Connect
                         try:
                             mydb = mysql.connector.connect(
-                            host="localhost", #IP Address of the database
-                            user="userslims", #db username (read/write) access
-                            password="slims", #db password
-                            port="3306", # port used by the db
-                            database="slims8" # name of the db
+                            host=db_host, #IP Address of the database
+                            user=db_user, #db username (read/write) access
+                            password=db_password, #db password
+                            port=db_port, # port used by the db
+                            database=db_name # name of the db
                             )
                             print(logtime(), "DB Connected")
                         except Exception as error:
@@ -232,11 +238,11 @@ while True:
                         # DB Connect
                         try:
                             mydb = mysql.connector.connect(
-                            host="localhost", #IP Address of the database
-                            user="userslims", #db username (read/write) access
-                            password="slims", #db password
-                            port="3306", # port used by the db
-                            database="slims8" # name of the db
+                            host=db_host, #IP Address of the database
+                            user=db_user, #db username (read/write) access
+                            password=db_password, #db password
+                            port=db_port, # port used by the db
+                            database=db_name # name of the db
                             )
                             print(logtime(), "DB Connected")
                         except Exception as error:
@@ -370,11 +376,11 @@ while True:
                         # DB Connect
                         try:
                             mydb = mysql.connector.connect(
-                            host="localhost", #IP Address of the database
-                            user="userslims", #db username (read/write) access
-                            password="slims", #db password
-                            port="3306", # port used by the db
-                            database="slims8" # name of the db
+                            host=db_host, #IP Address of the database
+                            user=db_user, #db username (read/write) access
+                            password=db_password, #db password
+                            port=db_port, # port used by the db
+                            database=db_name # name of the db
                             )
                             print(logtime(), "DB Connected")
                         except Exception as error:
