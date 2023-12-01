@@ -10,10 +10,10 @@ library_name = "Perpustakaan"
 language = "001"
 slims_version = "8" # Please select the version
 
-db_host="localhost", #IP Address of the database
-db_user="userslims", #db username (read/write) access
-db_password="slims", #db password
-db_port="3306", # port used by the db
+db_host="127.0.0.1" #IP Address of the database
+db_user="userslims" #db username (read/write) access
+db_password="slims" #db password
+db_port="3306" # port used by the db
 db_name="slims8" # name of the db
 
 def gettime():
