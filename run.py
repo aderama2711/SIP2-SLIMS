@@ -10,25 +10,18 @@ library_name = "Perpustakaan"
 language = "001"
 slims_version = "8" # Please select the version
 
-mydb = mysql.connector.connect(
-  host="localhost", #IP Address of the database
-  user="userslims", #db username (read/write) access
-  password="slims", #db password
-  port="3306", # port used by the db
-  database="slims8" # name of the db
-)
-
 def gettime():
     return datetime.datetime.now().strftime("%Y%m%d    %H%M%S")
 
 def logtime():
-    return datetime.datetime.now().strftime("%d/%m/%Y %H/%M/%S")
+    return datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 while True:
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((HOST, PORT))
             s.listen()
+            print(logtime(), "Ready to Connect")
             conn, addr = s.accept()
             with conn:
                 print(logtime(),f"Connected by {addr}")
@@ -50,11 +43,24 @@ while True:
                         resp = bytes("98YYYNNN500   003"+gettime()+"2.00AO"+library_name+"|BXNYYNYNNYNNYNNNNN"+"\r", 'utf-8')
                     
                     # item information
-                    if string[0:2] == "17":
+                    elif string[0:2] == "17":
                         print(logtime(),"Item Information")
                         # get book ID
                         item_id = string.split("AB")[1].split("|")[0]
 
+                        # DB Connect
+                        try:
+                            mydb = mysql.connector.connect(
+                            host="localhost", #IP Address of the database
+                            user="userslims", #db username (read/write) access
+                            password="slims", #db password
+                            port="3306", # port used by the db
+                            database="slims8" # name of the db
+                            )
+                            print(logtime(), "DB Connected")
+                        except Exception as error:
+                                print(logtime(),traceback.format_exc())
+                                
                         # get book information
                         mycursor = mydb.cursor()
                         mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
@@ -89,6 +95,7 @@ while True:
                                     cs = "03"
                                     # Form data
                                     resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AB"+item_id+"|AJ"+title+"\r", 'utf-8')
+                                    
 
                                 elif last[8] == 1 and last[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
                                     cs = "02"
@@ -100,6 +107,8 @@ while True:
                                 cs = "03"
                                 # Form data
                                 resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AB"+item_id+"|AJ"+title+"\r", 'utf-8')
+                        mydb.close()
+                        print(logtime(),"DB Closed")
 
                     # patron end session
                     elif string[0:2] == "35":
@@ -113,6 +122,19 @@ while True:
                         print(logtime(),"Patron Status")
                         # get user ID
                         user_id = string.split("AA")[1].split("|")[0]
+
+                        # DB Connect
+                        try:
+                            mydb = mysql.connector.connect(
+                            host="localhost", #IP Address of the database
+                            user="userslims", #db username (read/write) access
+                            password="slims", #db password
+                            port="3306", # port used by the db
+                            database="slims8" # name of the db
+                            )
+                            print(logtime(), "DB Connected")
+                        except Exception as error:
+                                print(logtime(),traceback.format_exc())
 
                         # check user
                         mycursor = mydb.cursor()
@@ -136,12 +158,27 @@ while True:
                             else:
                                 resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+user_id+"|AE"+name+"|BLY"+"\r", 'utf-8')
 
+                        mydb.close()
+                        print(logtime(),"DB Closed")
 
                     # patron information
                     elif string[0:2] == "63":
                         print(logtime(),"Patron Information")
                         # get user ID
                         user_id = string.split("AA")[1].split("|")[0]
+
+                        # DB Connect
+                        try:
+                            mydb = mysql.connector.connect(
+                            host="localhost", #IP Address of the database
+                            user="userslims", #db username (read/write) access
+                            password="slims", #db password
+                            port="3306", # port used by the db
+                            database="slims8" # name of the db
+                            )
+                            print(logtime(), "DB Connected")
+                        except Exception as error:
+                                print(logtime(),traceback.format_exc())
 
                         # check user
                         mycursor = mydb.cursor()
@@ -180,8 +217,10 @@ while True:
                                 for id in id_list_loan:
                                     charged_item += "|AU"+id
 
-
                                 resp = bytes("64  "+summary+"           001"+gettime()+(" "*8)+"   "+str(loan_count)+(" "*12)+"AO"+library_name+"|AA"+user_id+"|AE"+name+charged_item+"|BLY"+"\r","utf-8")
+
+                        mydb.close()
+                        print(logtime(),"DB Closed")
 
                     # check out
                     elif string[0:2] == "11":
@@ -189,6 +228,19 @@ while True:
                         # get user id and item id
                         user_id = string.split("AA")[1].split("|")[0]
                         item_id = string.split("AB")[1].split("|")[0]
+
+                        # DB Connect
+                        try:
+                            mydb = mysql.connector.connect(
+                            host="localhost", #IP Address of the database
+                            user="userslims", #db username (read/write) access
+                            password="slims", #db password
+                            port="3306", # port used by the db
+                            database="slims8" # name of the db
+                            )
+                            print(logtime(), "DB Connected")
+                        except Exception as error:
+                                print(logtime(),traceback.format_exc())
 
                         mycursor = mydb.cursor()
                         mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
@@ -303,6 +355,8 @@ while True:
 
                                             print(logtime(),mycursor.rowcount, "record inserted.")
                                             print(logtime(),mycursor._warnings)
+                        mydb.close()
+                        print(logtime(),"DB Closed")
                             
                     # check in
                     elif string[0:2] == "09":
@@ -313,12 +367,26 @@ while True:
                         print(logtime(),returnY, returnM, returnD)
                         item_id = string.split("AB")[1].split("|")[0]
 
+                        # DB Connect
+                        try:
+                            mydb = mysql.connector.connect(
+                            host="localhost", #IP Address of the database
+                            user="userslims", #db username (read/write) access
+                            password="slims", #db password
+                            port="3306", # port used by the db
+                            database="slims8" # name of the db
+                            )
+                            print(logtime(), "DB Connected")
+                        except Exception as error:
+                                print(logtime(),traceback.format_exc())
+
+                        # Check fines
                         mycursor = mydb.cursor()
                         mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) and item_code='"+item_id+"'")
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
-                            resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFANDA MENDAPAT DENDA, SILAHKAN KE SIRKULASI"+"\r", 'utf-8')
+                            resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFANDA MENDAPAT DENDA, SILAHKAN KE SIRKULASI"+"\r", 'utf-8')
 
                         else:
                             # check book
@@ -326,7 +394,7 @@ while True:
                             mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
                             myresult = mycursor.fetchall()
                             if len(myresult) == 0 :
-                                resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
+                                resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
 
                             else :
                                 biblio_id = myresult[0][1]
@@ -343,7 +411,7 @@ while True:
                                         last = x
 
                                     if last[8] == 1 and last[9] == 1: # if is_lent 1 and is_return 0 then book in lent and not available    
-                                        resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
+                                        resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
                                     
                                     else:
                                         resp = bytes("101YNN"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BERHASIL DIKEMBALIKAN"+"\r", 'utf-8')
@@ -362,7 +430,9 @@ while True:
                                 else:
                                     resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+item_id+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
 
-
+                        mydb.close()
+                        print(logtime(),"DB Closed")
+                    
                     print(logtime(),resp)
                     conn.sendall(resp)
     except Exception as error:
