@@ -73,7 +73,7 @@ while True:
                         myresult = mycursor.fetchall()
 
                         if len(myresult) == 0:
-                            resp = bytes("18000001"+gettime()+"AO"+library_name+"|AB"+string(item_id)+"|AJ|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
+                            resp = bytes("18000001"+gettime()+"AO"+library_name+"|AB"+str(item_id)+"|AJ|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
 
                         else :
                             # get title
@@ -100,7 +100,7 @@ while True:
                                 if last[8] == 1 and last[9] == 1: # if is_lent 1 and is_return 1 then book returned and available
                                     cs = "03"
                                     # Form data
-                                    resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AB"+string(item_id)+"|AJ"+title+"\r", 'utf-8')
+                                    resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AB"+str(item_id)+"|AJ"+title+"\r", 'utf-8')
                                     
 
                                 elif last[8] == 1 and last[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
@@ -108,11 +108,11 @@ while True:
                                     due_date = last[4]
 
                                     # Form data
-                                    resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AH"+due_date.strftime('%Y-%m-%d')+"|AB"+string(item_id)+"|AJ"+title+"\r", 'utf-8')
+                                    resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AH"+due_date.strftime('%Y-%m-%d')+"|AB"+str(item_id)+"|AJ"+title+"\r", 'utf-8')
                             else:
                                 cs = "03"
                                 # Form data
-                                resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AB"+string(item_id)+"|AJ"+title+"\r", 'utf-8')
+                                resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AB"+str(item_id)+"|AJ"+title+"\r", 'utf-8')
                         mydb.close()
                         print(logtime(),"DB Closed")
 
@@ -121,7 +121,7 @@ while True:
                         print(logtime(),"Patron End Session")
                         # get user ID
                         user_id = string.split("AA")[1].split("|")[0]
-                        resp = bytes("36Y"+gettime()+"|AO"+library_name+"|AA"+string(user_id)+"\r", 'utf-8')
+                        resp = bytes("36Y"+gettime()+"|AO"+library_name+"|AA"+str(user_id)+"\r", 'utf-8')
                     
                     # patron status
                     elif string[0:2] == "23":
@@ -148,21 +148,21 @@ while True:
                         myresult = mycursor.fetchall()
 
                         if len(myresult) == 0:
-                            resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+string(user_id)+"|BLN|AFANGGOTA TIDAK DITEMUKAN"+"\r", 'utf-8')
+                            resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|BLN|AFANGGOTA TIDAK DITEMUKAN"+"\r", 'utf-8')
                         else :
                             name = myresult[0][1]
                             expdate = myresult[0][17]
                             if datetime.datetime.date(datetime.datetime.now()) > expdate:
-                                resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+string(user_id)+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r", 'utf-8')
+                                resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r", 'utf-8')
                             
                             mycursor = mydb.cursor()
                             mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
                             myresult = mycursor.fetchall()
 
                             if len(myresult) != 0:
-                                resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+string(user_id)+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')    
+                                resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')    
                             else:
-                                resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+string(user_id)+"|AE"+name+"|BLY"+"\r", 'utf-8')
+                                resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AE"+name+"|BLY"+"\r", 'utf-8')
 
                         mydb.close()
                         print(logtime(),"DB Closed")
@@ -196,14 +196,14 @@ while True:
                             name = myresult[0][1]
                             expdate = myresult[0][17]
                             if datetime.datetime.date(datetime.datetime.now()) > expdate:
-                                resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+string(user_id)+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r","utf-8")
+                                resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+str(user_id)+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r","utf-8")
                             
                             mycursor = mydb.cursor()
                             mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
                             myresult = mycursor.fetchall()
 
                             if len(myresult) != 0:
-                                resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+string(user_id)+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r","utf-8")
+                                resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+str(user_id)+"|AE"+name+"|BLN|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r","utf-8")
                             else:
                                 loan_count = 0
                                 summary = " "
@@ -223,7 +223,7 @@ while True:
                                 for id in id_list_loan:
                                     charged_item += "|AU"+id
 
-                                resp = bytes("64  "+summary+"           001"+gettime()+(" "*8)+"   "+str(loan_count)+(" "*12)+"AO"+library_name+"|AA"+string(user_id)+"|AE"+name+charged_item+"|BLY"+"\r","utf-8")
+                                resp = bytes("64  "+summary+"           001"+gettime()+(" "*8)+"   "+str(loan_count)+(" "*12)+"AO"+library_name+"|AA"+str(user_id)+"|AE"+name+charged_item+"|BLY"+"\r","utf-8")
 
                         mydb.close()
                         print(logtime(),"DB Closed")
@@ -253,7 +253,7 @@ while True:
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
-                            resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+string(user_id)+"AH|AB"+string(item_id)+"|AJ|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')
+                            resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"AH|AB"+str(item_id)+"|AJ|AFANDA DIKENAKAN DENDA, SILAHKAN HUBUNGI MEJA SIRKULASI"+"\r", 'utf-8')
                             
                         else :
                             # get member type
@@ -281,7 +281,7 @@ while True:
                                         loan += 1
                         
                             if loan == loan_limit:
-                                resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+string(user_id)+"|AH|AB"+string(item_id)+"|AJ|AFSUDAH MENCAPAI LIMIT PEMINJAMAN"+"\r", 'utf-8')
+                                resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AH|AB"+str(item_id)+"|AJ|AFSUDAH MENCAPAI LIMIT PEMINJAMAN"+"\r", 'utf-8')
                             
                             else:
                                 # check book
@@ -289,7 +289,7 @@ while True:
                                 mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
                                 myresult = mycursor.fetchall()
                                 if len(myresult) == 0 :
-                                    resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+string(user_id)+"|AH|AB"+string(item_id)+"|AJ|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
+                                    resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AH|AB"+str(item_id)+"|AJ|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
                                 else :
                                     biblio_id = myresult[0][1]
                                     mycursor = mydb.cursor()
@@ -309,9 +309,9 @@ while True:
 
                                     if loaned:
                                         if last[8] == 1 and last[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
-                                            resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+string(user_id)+"|AH|AB"+string(item_id)+"|AJ"+title+"|AFBUKU SUDAH DIPINJAM"+"\r", 'utf-8')
+                                            resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AH|AB"+str(item_id)+"|AJ"+title+"|AFBUKU SUDAH DIPINJAM"+"\r", 'utf-8')
                                         else :
-                                            resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+string(user_id)+"|AH"+str((datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'))+"|AB"+string(item_id)+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
+                                            resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AH"+str((datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'))+"|AB"+str(item_id)+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
                                             
                                             # insert to loan
                                             sql = "INSERT INTO loan (item_code, member_id, loan_date, due_date, is_lent) VALUES (%s, %s, %s, %s, %s)"
@@ -337,7 +337,7 @@ while True:
                                                 print(logtime(),mycursor.rowcount, "record inserted.")
                                                 print(logtime(),mycursor._warnings)
                                     else:
-                                        resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+string(user_id)+"|AH"+str((datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'))+"|AB"+string(item_id)+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
+                                        resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AH"+str((datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'))+"|AB"+str(item_id)+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
                                             
                                         # insert to loan
                                         sql = "INSERT INTO loan (item_code, member_id, loan_date, due_date, is_lent) VALUES (%s, %s, %s, %s, %s)"
@@ -392,7 +392,7 @@ while True:
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
-                            resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+string(item_id)+"|AQ|AJ"+title+"|AFANDA MENDAPAT DENDA, SILAHKAN KE SIRKULASI"+"\r", 'utf-8')
+                            resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+str(item_id)+"|AQ|AJ"+title+"|AFANDA MENDAPAT DENDA, SILAHKAN KE SIRKULASI"+"\r", 'utf-8')
 
                         else:
                             # check book
@@ -400,7 +400,7 @@ while True:
                             mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
                             myresult = mycursor.fetchall()
                             if len(myresult) == 0 :
-                                resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+string(item_id)+"|AQ|AJ"+title+"|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
+                                resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+str(item_id)+"|AQ|AJ"+title+"|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
 
                             else :
                                 biblio_id = myresult[0][1]
@@ -417,10 +417,10 @@ while True:
                                         last = x
 
                                     if last[8] == 1 and last[9] == 1: # if is_lent 1 and is_return 0 then book in lent and not available    
-                                        resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+string(item_id)+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
+                                        resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+str(item_id)+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
                                     
                                     else:
-                                        resp = bytes("101YNN"+gettime()+"AO"+library_name+"|AB"+string(item_id)+"|AQ|AJ"+title+"|AFBUKU BERHASIL DIKEMBALIKAN"+"\r", 'utf-8')
+                                        resp = bytes("101YNN"+gettime()+"AO"+library_name+"|AB"+str(item_id)+"|AQ|AJ"+title+"|AFBUKU BERHASIL DIKEMBALIKAN"+"\r", 'utf-8')
 
                                         # update to loan
                                         sql = "UPDATE loan SET is_return=%s, return_date=%s WHERE loan_id=%s"
@@ -434,7 +434,7 @@ while True:
                                         print(logtime(),mycursor._warnings)
                                 
                                 else:
-                                    resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+string(item_id)+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
+                                    resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+str(item_id)+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
 
                         mydb.close()
                         print(logtime(),"DB Closed")
