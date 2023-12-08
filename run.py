@@ -69,7 +69,7 @@ while True:
                                 
                         # get book information
                         mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
+                        mycursor.execute("SELECT biblio_id FROM item WHERE item_code='"+item_id+"'")
                         myresult = mycursor.fetchall()
 
                         if len(myresult) == 0:
@@ -77,38 +77,28 @@ while True:
 
                         else :
                             # get title
-                            biblio_id = myresult[0][1]
+                            biblio_id = myresult[0][0]
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * FROM biblio WHERE biblio_id="+str(biblio_id))
+                            mycursor.execute("SELECT title FROM biblio WHERE biblio_id="+str(biblio_id))
                             myresult = mycursor.fetchall()
-                            title = myresult[0][2]
+                            title = myresult[0][0]
 
                             # for circulation status
                             loaned = False
 
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * FROM loan WHERE item_code='"+item_id+"' ORDER BY `loan_id`")
+                            mycursor.execute("SELECT due_date FROM loan WHERE item_code = '"+item_id+"' AND `is_lent` = 1 AND `is_return` = 0 ORDER BY `loan_id`")
                             myresult = mycursor.fetchall()
                             if len(myresult) != 0:
                                 loaned = True
-                                for x in myresult:
-                                    last = x
-
-                            due_date = ""
                                 
                             if loaned :
-                                if last[8] == 1 and last[9] == 1: # if is_lent 1 and is_return 1 then book returned and available
-                                    cs = "03"
-                                    # Form data
-                                    resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AB"+str(item_id)+"|AJ"+title+"\r", 'utf-8')
-                                    
+                                cs = "02"
+                                due_date = myresult[0][0]
 
-                                elif last[8] == 1 and last[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
-                                    cs = "02"
-                                    due_date = last[4]
+                                # Form data
+                                resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AH"+due_date.strftime('%Y-%m-%d')+"|AB"+str(item_id)+"|AJ"+title+"\r", 'utf-8')
 
-                                    # Form data
-                                    resp = bytes("18"+cs+"0001"+gettime()+"AO"+library_name+"|AH"+due_date.strftime('%Y-%m-%d')+"|AB"+str(item_id)+"|AJ"+title+"\r", 'utf-8')
                             else:
                                 cs = "03"
                                 # Form data
@@ -144,19 +134,19 @@ while True:
 
                         # check user
                         mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * FROM member WHERE member_id='"+user_id+"'")
+                        mycursor.execute("SELECT member_name, expire_date FROM member WHERE member_id='"+user_id+"'")
                         myresult = mycursor.fetchall()
 
                         if len(myresult) == 0:
                             resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|BLN|AFANGGOTA TIDAK DITEMUKAN"+"\r", 'utf-8')
                         else :
-                            name = myresult[0][1]
-                            expdate = myresult[0][17]
+                            name = myresult[0][0]
+                            expdate = myresult[0][1]
                             if datetime.datetime.date(datetime.datetime.now()) > expdate:
                                 resp = bytes("24"+" "*14+language+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r", 'utf-8')
                             
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
+                            mycursor.execute("SELECT loan_id from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
                             myresult = mycursor.fetchall()
 
                             if len(myresult) != 0:
@@ -188,18 +178,18 @@ while True:
 
                         # check user
                         mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * FROM member WHERE member_id='"+user_id+"'")
+                        mycursor.execute("SELECT member_name, expire_date FROM member WHERE member_id='"+user_id+"'")
                         myresult = mycursor.fetchall()
                         if len(myresult) == 0:
                             resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|BLN|AFANGGOTA TIDAK ADA"+"\r","utf-8")
                         else :
-                            name = myresult[0][1]
-                            expdate = myresult[0][17]
+                            name = myresult[0][0]
+                            expdate = myresult[0][1]
                             if datetime.datetime.date(datetime.datetime.now()) > expdate:
                                 resp = bytes("64              001"+gettime()+(" "*24)+"AO"+library_name+"|AA"+str(user_id)+"|AE"+name+"|BLN|AFANGGOTA TIDAK AKTIF"+"\r","utf-8")
                             
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
+                            mycursor.execute("SELECT loan_id from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
                             myresult = mycursor.fetchall()
 
                             if len(myresult) != 0:
@@ -210,14 +200,13 @@ while True:
                                 id_list_loan = []
 
                                 mycursor = mydb.cursor()
-                                mycursor.execute("SELECT * FROM loan WHERE member_id='"+user_id+"' ORDER BY `loan_id`")
+                                mycursor.execute("SELECT item_code FROM loan WHERE member_id='"+user_id+"' AND `is_lent` = 1 AND `is_return` = 0 ORDER BY `loan_id`")
                                 myresult = mycursor.fetchall()
                                 if len(myresult) != 0:
                                     for x in myresult:
-                                        if x[8] == 1 and x[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
-                                            loan_count += 1
-                                            id_list_loan.append(x[1])
-                                            summary = "Y"
+                                        loan_count += 1
+                                        id_list_loan.append(x[0][0])
+                                        summary = "Y"
                                 
                                 charged_item = ""
                                 for id in id_list_loan:
@@ -249,7 +238,7 @@ while True:
                                 print(logtime(),traceback.format_exc())
 
                         mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
+                        mycursor.execute("SELECT loan_id from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) AND member_id='"+user_id+"'")
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
@@ -258,27 +247,26 @@ while True:
                         else :
                             # get member type
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * FROM member WHERE member_id='"+user_id+"'")
+                            mycursor.execute("SELECT member_type_id FROM member WHERE member_id='"+user_id+"'")
                             myresult = mycursor.fetchall()
-                            member_type = myresult[0][4]
+                            member_type = myresult[0][0]
 
                             # get max loan, and loan duration
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * FROM mst_member_type WHERE member_type_id='"+str(member_type)+"'")
+                            mycursor.execute("SELECT loan_limit, loan_periode FROM mst_member_type WHERE member_type_id='"+str(member_type)+"'")
                             myresult = mycursor.fetchall()
                             
-                            loan_limit = myresult[0][2]+1
-                            loan_periode = myresult[0][3]
+                            loan_limit = myresult[0][0]
+                            loan_periode = myresult[0][1]
                             
-                            # check loan
+                            # check loan limit
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * FROM loan WHERE member_id='"+user_id+"' ORDER BY `loan_id`")
+                            mycursor.execute("SELECT item_code FROM loan WHERE member_id='"+user_id+"' AND `is_lent` = 1 AND `is_return` = 0 ORDER BY `loan_id`")
                             myresult = mycursor.fetchall()
                             loan = 0
                             if len(myresult) != 0:
                                 for x in myresult:
-                                    if x[8] == 1 and x[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
-                                        loan += 1
+                                    loan += 1
                         
                             if loan == loan_limit:
                                 resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AH|AB"+str(item_id)+"|AJ|AFSUDAH MENCAPAI LIMIT PEMINJAMAN"+"\r", 'utf-8')
@@ -286,57 +274,30 @@ while True:
                             else:
                                 # check book
                                 mycursor = mydb.cursor()
-                                mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
+                                mycursor.execute("SELECT biblio_id FROM item WHERE item_code='"+item_id+"'")
                                 myresult = mycursor.fetchall()
                                 if len(myresult) == 0 :
                                     resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AH|AB"+str(item_id)+"|AJ|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
                                 else :
-                                    biblio_id = myresult[0][1]
+                                    # get title
+                                    biblio_id = myresult[0][0]
                                     mycursor = mydb.cursor()
-                                    mycursor.execute("SELECT * FROM biblio WHERE biblio_id="+str(biblio_id))
+                                    mycursor.execute("SELECT title FROM biblio WHERE biblio_id="+str(biblio_id))
                                     myresult = mycursor.fetchall()
-                                    title = myresult[0][2]
-                                    
+                                    title = myresult[0][0]
+
+                                    # for circulation status
                                     loaned = False
 
                                     mycursor = mydb.cursor()
-                                    mycursor.execute("SELECT * FROM loan WHERE item_code='"+item_id+"' ORDER BY `loan_id`")
+                                    mycursor.execute("SELECT due_date FROM loan WHERE item_code = '"+item_id+"' AND `is_lent` = 1 AND `is_return` = 0 ORDER BY `loan_id`")
                                     myresult = mycursor.fetchall()
                                     if len(myresult) != 0:
                                         loaned = True
-                                        for x in myresult:
-                                            last = x
 
                                     if loaned:
-                                        if last[8] == 1 and last[9] == 0: # if is_lent 1 and is_return 0 then book in lent and not available
-                                            resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AH|AB"+str(item_id)+"|AJ"+title+"|AFBUKU SUDAH DIPINJAM"+"\r", 'utf-8')
-                                        else :
-                                            resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AH"+str((datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'))+"|AB"+str(item_id)+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
-                                            
-                                            # insert to loan
-                                            sql = "INSERT INTO loan (item_code, member_id, loan_date, due_date, is_lent) VALUES (%s, %s, %s, %s, %s)"
-                                            val = (item_id, user_id, datetime.datetime.now().strftime('%Y-%m-%d'), (datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'), 1)
-
-                                            mycursor.execute(sql, val)
-
-                                            mydb.commit()
-
-                                            print(logtime(),mycursor.rowcount, "record inserted.")
-                                            print(logtime(),mycursor._warnings)
-
-
-                                            if slims_version == 9:
-                                                # insert to log
-                                                sql = "INSERT INTO system_log (log_type, id, log_location, sub_module, action, log_msg, log_date) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-                                                val = ("system", user_id, "circulation", "Loan", "Add", "Gateway: Loan", datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-
-                                                mycursor.execute(sql, val)
-
-                                                mydb.commit()
-
-                                                print(logtime(),mycursor.rowcount, "record inserted.")
-                                                print(logtime(),mycursor._warnings)
-                                    else:
+                                        resp = bytes("120NNN"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AH|AB"+str(item_id)+"|AJ"+title+"|AFBUKU SUDAH DIPINJAM"+"\r", 'utf-8')
+                                    else :
                                         resp = bytes("121NNY"+gettime()+"AO"+library_name+"|AA"+str(user_id)+"|AH"+str((datetime.datetime.now() + datetime.timedelta(days=loan_periode)).strftime('%Y-%m-%d'))+"|AB"+str(item_id)+"|AJ"+title+"|AFBUKU BERHASIL DIPINJAM"+"\r", 'utf-8')
                                             
                                         # insert to loan
@@ -350,6 +311,7 @@ while True:
                                         print(logtime(),mycursor.rowcount, "record inserted.")
                                         print(logtime(),mycursor._warnings)
 
+
                                         if slims_version == 9:
                                             # insert to log
                                             sql = "INSERT INTO system_log (log_type, id, log_location, sub_module, action, log_msg, log_date) VALUES (%s, %s, %s, %s, %s, %s, %s)"
@@ -361,6 +323,7 @@ while True:
 
                                             print(logtime(),mycursor.rowcount, "record inserted.")
                                             print(logtime(),mycursor._warnings)
+                                    
                         mydb.close()
                         print(logtime(),"DB Closed")
                             
@@ -388,7 +351,7 @@ while True:
 
                         # Check fines
                         mycursor = mydb.cursor()
-                        mycursor.execute("SELECT * from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) and item_code='"+item_id+"'")
+                        mycursor.execute("SELECT loan_id from loan where is_lent=1 and is_return=0 AND TO_DAYS(due_date) < TO_DAYS(NOW()) and item_code='"+item_id+"'")
                         myresult = mycursor.fetchall()
 
                         if len(myresult) != 0:
@@ -397,26 +360,27 @@ while True:
                         else:
                             # check book
                             mycursor = mydb.cursor()
-                            mycursor.execute("SELECT * FROM item WHERE item_code='"+item_id+"'")
+                            mycursor.execute("SELECT biblio_id FROM item WHERE item_code='"+item_id+"'")
                             myresult = mycursor.fetchall()
                             if len(myresult) == 0 :
                                 resp = bytes("100NNY"+gettime()+"AO"+library_name+"|AB"+str(item_id)+"|AQ|AJ"+title+"|AFBUKU TIDAK DITEMUKAN"+"\r", 'utf-8')
 
                             else :
-                                biblio_id = myresult[0][1]
+                                # get title
+                                biblio_id = myresult[0][0]
                                 mycursor = mydb.cursor()
-                                mycursor.execute("SELECT * FROM biblio WHERE biblio_id="+str(biblio_id))
+                                mycursor.execute("SELECT title FROM biblio WHERE biblio_id="+str(biblio_id))
                                 myresult = mycursor.fetchall()
-                                title = myresult[0][2]
+                                title = myresult[0][0]
 
+                                loaned = False
                                 mycursor = mydb.cursor()
-                                mycursor.execute("SELECT * FROM loan WHERE item_code='"+item_id+"' ORDER BY `loan_id`")
+                                mycursor.execute("SELECT loan_id FROM loan WHERE item_code = '"+item_id+"' AND `is_lent` = 1 AND `is_return` = 0 ORDER BY `loan_id`")
                                 myresult = mycursor.fetchall()
                                 if len(myresult) != 0:
-                                    for x in myresult:
-                                        last = x
+                                    loaned = True
 
-                                    if last[8] == 1 and last[9] == 1: # if is_lent 1 and is_return 0 then book in lent and not available    
+                                    if not loaned:   
                                         resp = bytes("100NNN"+gettime()+"AO"+library_name+"|AB"+str(item_id)+"|AQ|AJ"+title+"|AFBUKU BELUM DIPINJAM"+"\r", 'utf-8')
                                     
                                     else:
@@ -424,7 +388,7 @@ while True:
 
                                         # update to loan
                                         sql = "UPDATE loan SET is_return=%s, return_date=%s WHERE loan_id=%s"
-                                        val = ("1", returnY + "-" + returnM + "-" + returnD, last[0])
+                                        val = ("1", returnY + "-" + returnM + "-" + returnD, myresult[-1][0])
 
                                         mycursor.execute(sql, val)
 
