@@ -205,7 +205,7 @@ while True:
                                 if len(myresult) != 0:
                                     for x in myresult:
                                         loan_count += 1
-                                        id_list_loan.append(x[0][0])
+                                        id_list_loan.append(x[0])
                                         summary = "Y"
                                 
                                 charged_item = ""
